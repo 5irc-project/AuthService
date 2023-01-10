@@ -1,9 +1,9 @@
 ﻿namespace AuthService.Models
 {
-    public class SpotifyModel
+    public class SpotifyModel : ITokens
     {
-        public String AccessToken { get; set; }
-        public String RefreshToken { get; set; }
+        public string AccessToken { get; set; }
+        public string RefreshToken { get; set; }
 
         public SpotifyModel(string accessToken, string refreshToken) 
         {

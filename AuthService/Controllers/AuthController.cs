@@ -4,6 +4,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using SpotifyAPI.Web;
+using Swan;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -41,7 +42,7 @@ namespace AuthService.Controllers
         }
 
         [HttpGet("/redirect")]
-        public async Task<SpotifyDto> AuthRedirect(String code)
+        public async Task<LoginDto> AuthRedirect(String code)
         {
             Console.WriteLine("OUIOUIOUIOUI", code);
             var response = await new OAuthClient().RequestToken(
@@ -56,9 +57,12 @@ namespace AuthService.Controllers
 
             // Generate JWT
             var jwtString = GenerateJwtToken();
-
             SpotifyModel tokens = new SpotifyModel(response.AccessToken, response.RefreshToken);
-            SpotifyDto spotifyDto = mapper.Map<SpotifyDto>(tokens);
+
+            LoginDto spotifyDto = new LoginDto();
+            spotifyDto.JwtToken = jwtString;
+            spotifyDto.Tokens = tokens;
+
             return spotifyDto;
             // Also important for later: response.RefreshToken
         }

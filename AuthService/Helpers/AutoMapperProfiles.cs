@@ -8,7 +8,7 @@ namespace AuthService.Helpers
     {
         public AutoMapperProfiles() 
         {
-            CreateMap<SpotifyModel, SpotifyDto>();
+            CreateMap<SpotifyModel, LoginDto>();
         }
     }
 }
