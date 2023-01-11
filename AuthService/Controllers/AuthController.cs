@@ -26,10 +26,10 @@ namespace AuthService.Controllers
         }
 
         [HttpGet("/auth")]
-        public void Auth()
+        public string Auth()
         {
             var loginRequest = new LoginRequest(
-              new Uri("https://localhost:7091/redirect"),
+              new Uri(config["Urls:Redirect"]),
               config["Spotify:ClientId"],
               LoginRequest.ResponseType.Code
             )
@@ -38,8 +38,7 @@ namespace AuthService.Controllers
             };
             var uri = loginRequest.ToUri();
             // Redirect user to uri via your favorite web-server
-            if (uri != null)
-                Response.Redirect(uri.ToString());
+            return uri.ToString();
         }
 
         [HttpGet("/redirect")]
@@ -49,16 +48,17 @@ namespace AuthService.Controllers
                 new AuthorizationCodeTokenRequest(config["Spotify:ClientId"],
                                                   config["Spotify:ClientSecret"],
                                                   code,
-                                                  new Uri("https://localhost:7091/redirect"))
+                                                  new Uri(config["Urls:Redirect"]))
               );
 
             var spotify = new SpotifyClient(response.AccessToken);
-            // var user = await spotify.Tracks.Get("1s6ux0lNiTziSrd7iUAADH");
-            // Console.WriteLine(user);
+            var user = await spotify.UserProfile.Current();
+            Console.WriteLine(user.ToString());
+
             //Response.Redirect("https://localhost:7091");
 
             // Generate JWT
-            var jwtString = GenerateJwtToken();
+            var jwtString = GenerateJwtToken(user);
             SpotifyModel tokens = new SpotifyModel(response.AccessToken, response.RefreshToken);
 
             LoginDto spotifyDto = new LoginDto();
@@ -69,15 +69,14 @@ namespace AuthService.Controllers
             // Also important for later: response.RefreshToken
         }
 
-        private string GenerateJwtToken()
+        private string GenerateJwtToken(PrivateUser user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:SecretKey"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, "userName"),
-                new Claim("fullName", "fullName"),
-                new Claim("role", "userRole"),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim("displayName", user.DisplayName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
             var token = new JwtSecurityToken(
