@@ -36,6 +36,17 @@ namespace AuthService
                     };
                 });
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("_myAllowSpecificOrigins",
+                    policy =>
+                    {
+                        policy.WithOrigins("*")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                    });
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -47,6 +58,7 @@ namespace AuthService
 
             app.UseHttpsRedirection();
 
+            app.UseCors("_myAllowSpecificOrigins");
             app.UseAuthorization();
 
 

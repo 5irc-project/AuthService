@@ -55,7 +55,6 @@ namespace AuthService.Controllers
             var user = await spotify.UserProfile.Current();
             Console.WriteLine(user.ToString());
 
-            //Response.Redirect("https://localhost:7091");
 
             // Generate JWT
             var jwtString = GenerateJwtToken(user);
@@ -64,6 +63,8 @@ namespace AuthService.Controllers
             LoginDto spotifyDto = new LoginDto();
             spotifyDto.JwtToken = jwtString;
             spotifyDto.Tokens = tokens;
+
+            Response.Redirect($"http://localhost:8080/login?accessToken={spotifyDto.Tokens.AccessToken}&refreshToken={spotifyDto.Tokens.RefreshToken}&jwtToken={spotifyDto.JwtToken}");
 
             return spotifyDto;
             // Also important for later: response.RefreshToken
