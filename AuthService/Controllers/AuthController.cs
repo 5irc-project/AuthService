@@ -26,11 +26,11 @@ namespace AuthService.Controllers
         }
 
         [HttpGet("/auth")]
-        public String Auth()
+        public void Auth()
         {
             var loginRequest = new LoginRequest(
               new Uri("https://localhost:7091/redirect"),
-              "5212c3ac72cc47dab1ac2868861a5c3c",
+              config["Spotify:ClientId"],
               LoginRequest.ResponseType.Code
             )
             {
@@ -38,21 +38,23 @@ namespace AuthService.Controllers
             };
             var uri = loginRequest.ToUri();
             // Redirect user to uri via your favorite web-server
-            return uri.ToString();
+            if (uri != null)
+                Response.Redirect(uri.ToString());
         }
 
         [HttpGet("/redirect")]
         public async Task<LoginDto> AuthRedirect(String code)
         {
-            Console.WriteLine("OUIOUIOUIOUI", code);
             var response = await new OAuthClient().RequestToken(
-                new AuthorizationCodeTokenRequest("5212c3ac72cc47dab1ac2868861a5c3c",
-                                                  "99cfaa8b04664f6989d4b2cf52763fe8",
+                new AuthorizationCodeTokenRequest(config["Spotify:ClientId"],
+                                                  config["Spotify:ClientSecret"],
                                                   code,
                                                   new Uri("https://localhost:7091/redirect"))
               );
 
             var spotify = new SpotifyClient(response.AccessToken);
+            // var user = await spotify.Tracks.Get("1s6ux0lNiTziSrd7iUAADH");
+            // Console.WriteLine(user);
             //Response.Redirect("https://localhost:7091");
 
             // Generate JWT
