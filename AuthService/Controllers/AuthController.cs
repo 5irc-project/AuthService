@@ -29,7 +29,7 @@ namespace AuthService.Controllers
         public string Auth()
         {
             var loginRequest = new LoginRequest(
-              new Uri("https://localhost:7091/redirect"),
+              new Uri(config["Urls:Redirect"]),
               config["Spotify:ClientId"],
               LoginRequest.ResponseType.Code
             )
@@ -48,7 +48,7 @@ namespace AuthService.Controllers
                 new AuthorizationCodeTokenRequest(config["Spotify:ClientId"],
                                                   config["Spotify:ClientSecret"],
                                                   code,
-                                                  new Uri("https://localhost:7091/redirect"))
+                                                  new Uri(config["Urls:Redirect"]))
               );
 
             var spotify = new SpotifyClient(response.AccessToken);
