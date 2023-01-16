@@ -8,6 +8,8 @@ using Swan;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AuthService.DTO;
+using AuthService.RestConsumer;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -34,7 +36,15 @@ namespace AuthService.Controllers
               LoginRequest.ResponseType.Code
             )
             {
-                Scope = new[] { Scopes.UserTopRead, Scopes.UserReadPlaybackState, Scopes.UserModifyPlaybackState, Scopes.UserReadCurrentlyPlaying, Scopes.PlaylistReadPrivate, Scopes.PlaylistReadCollaborative, Scopes.Streaming, Scopes.AppRemoteControl }
+                Scope = new[] { Scopes.UserTopRead,
+                                Scopes.UserReadPlaybackState,
+                                Scopes.UserModifyPlaybackState,
+                                Scopes.UserReadCurrentlyPlaying,
+                                Scopes.PlaylistReadPrivate,
+                                Scopes.PlaylistReadCollaborative,
+                                Scopes.Streaming,
+                                Scopes.UserReadEmail,
+                                Scopes.AppRemoteControl }
             };
             var uri = loginRequest.ToUri();
             // Redirect user to uri via your favorite web-server
@@ -53,11 +63,18 @@ namespace AuthService.Controllers
 
             var spotify = new SpotifyClient(response.AccessToken);
             var user = await spotify.UserProfile.Current();
-            Console.WriteLine(user.ToString());
 
+            // DTO to send to userservie to register a user
+            UserDTO userDto = new UserDTO();
+            userDto.Email = user.Email;
+            userDto.Nom = user.DisplayName;
+            userDto.ProfilePictureUrl = user.Images.First().Url;
+
+            // Create or get user
+            UserLoggedDto dto = await UserService.CreateOrGetUser(userDto);
 
             // Generate JWT
-            var jwtString = GenerateJwtToken(user);
+            var jwtString = GenerateJwtToken(dto);
             SpotifyModel tokens = new SpotifyModel(response.AccessToken, response.RefreshToken);
 
             LoginDto spotifyDto = new LoginDto();
@@ -70,14 +87,14 @@ namespace AuthService.Controllers
             // Also important for later: response.RefreshToken
         }
 
-        private string GenerateJwtToken(PrivateUser user)
+        private string GenerateJwtToken(UserLoggedDto user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:SecretKey"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim("displayName", user.DisplayName),
+                new Claim("UserId", user.UserId.ToString()),
+                new Claim("displayName", user.Nom),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
             var token = new JwtSecurityToken(
