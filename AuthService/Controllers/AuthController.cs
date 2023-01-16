@@ -65,22 +65,16 @@ namespace AuthService.Controllers
             var user = await spotify.UserProfile.Current();
 
             // DTO to send to userservie to register a user
-            /*            UserDTO userDto = new UserDTO();
-                        userDto.Email = user.Email;
-                        userDto.Nom = user.DisplayName;
-                        userDto.ProfilePictureUrl = user.Images.First().Url;*/
+            UserDTO userDto = new UserDTO();
+            userDto.Email = user.Email;
+            userDto.Nom = user.DisplayName;
+            userDto.ProfilePictureUrl = user.Images.First().Url;
 
-            UserDTO dto = await UserService.GetUserByEmail(user.Email);
-            if(dto == null)
-            {
-
-            }
-
-            Console.WriteLine(user.ToString());
-
+            // Create or get user
+            UserLoggedDto dto = await UserService.CreateOrGetUser(userDto);
 
             // Generate JWT
-            var jwtString = GenerateJwtToken(user);
+            var jwtString = GenerateJwtToken(dto);
             SpotifyModel tokens = new SpotifyModel(response.AccessToken, response.RefreshToken);
 
             LoginDto spotifyDto = new LoginDto();
@@ -93,14 +87,14 @@ namespace AuthService.Controllers
             // Also important for later: response.RefreshToken
         }
 
-        private string GenerateJwtToken(PrivateUser user)
+        private string GenerateJwtToken(UserLoggedDto user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:SecretKey"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim("displayName", user.DisplayName),
+                new Claim("UserId", user.UserId.ToString()),
+                new Claim("displayName", user.Nom),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
             var token = new JwtSecurityToken(
