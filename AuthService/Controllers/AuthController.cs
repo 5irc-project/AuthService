@@ -64,7 +64,7 @@ namespace AuthService.Controllers
             spotifyDto.JwtToken = jwtString;
             spotifyDto.Tokens = tokens;
 
-            Response.Redirect($"http://localhost:8080/login?accessToken={spotifyDto.Tokens.AccessToken}&refreshToken={spotifyDto.Tokens.RefreshToken}&jwtToken={spotifyDto.JwtToken}");
+            Response.Redirect($"http://localhost/login?accessToken={spotifyDto.Tokens.AccessToken}&refreshToken={spotifyDto.Tokens.RefreshToken}&jwtToken={spotifyDto.JwtToken}");
 
             return spotifyDto;
             // Also important for later: response.RefreshToken
