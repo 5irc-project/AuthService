@@ -8,6 +8,8 @@ using Swan;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AuthService.DTO;
+using AuthService.RestConsumer;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -34,7 +36,15 @@ namespace AuthService.Controllers
               LoginRequest.ResponseType.Code
             )
             {
-                Scope = new[] { Scopes.UserTopRead, Scopes.UserReadPlaybackState, Scopes.UserModifyPlaybackState, Scopes.UserReadCurrentlyPlaying, Scopes.PlaylistReadPrivate, Scopes.PlaylistReadCollaborative, Scopes.Streaming, Scopes.AppRemoteControl }
+                Scope = new[] { Scopes.UserTopRead,
+                                Scopes.UserReadPlaybackState,
+                                Scopes.UserModifyPlaybackState,
+                                Scopes.UserReadCurrentlyPlaying,
+                                Scopes.PlaylistReadPrivate,
+                                Scopes.PlaylistReadCollaborative,
+                                Scopes.Streaming,
+                                Scopes.UserReadEmail,
+                                Scopes.AppRemoteControl }
             };
             var uri = loginRequest.ToUri();
             // Redirect user to uri via your favorite web-server
@@ -53,6 +63,19 @@ namespace AuthService.Controllers
 
             var spotify = new SpotifyClient(response.AccessToken);
             var user = await spotify.UserProfile.Current();
+
+            // DTO to send to userservie to register a user
+            /*            UserDTO userDto = new UserDTO();
+                        userDto.Email = user.Email;
+                        userDto.Nom = user.DisplayName;
+                        userDto.ProfilePictureUrl = user.Images.First().Url;*/
+
+            UserDTO dto = await UserService.GetUserByEmail(user.Email);
+            if(dto == null)
+            {
+
+            }
+
             Console.WriteLine(user.ToString());
 
 
