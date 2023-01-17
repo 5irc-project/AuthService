@@ -1,5 +1,4 @@
 ﻿using AuthService.DTO;
-using AuthService.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;

@@ -1,6 +1,4 @@
-﻿using AuthService.Models;
-
-namespace AuthService.DTO
+﻿namespace AuthService.DTO
 {
     public class LoginDto
     {
