@@ -1,11 +1,11 @@
-﻿namespace AuthService.Models
+﻿namespace AuthService.DTO
 {
-    public class SpotifyModel
-    {
+    public class JwtTokenDto
+    { 
         public string AccessToken { get; set; }
         public string RefreshToken { get; set; }
-
-        public SpotifyModel(string accessToken, string refreshToken) 
+            
+        public JwtTokenDto(string accessToken, string refreshToken)
         {
             AccessToken = accessToken;
             RefreshToken = refreshToken;
