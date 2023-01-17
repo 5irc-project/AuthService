@@ -36,15 +36,26 @@ namespace AuthService.Controllers
               LoginRequest.ResponseType.Code
             )
             {
-                Scope = new[] { Scopes.UserTopRead,
-                                Scopes.UserReadPlaybackState,
-                                Scopes.UserModifyPlaybackState,
-                                Scopes.UserReadCurrentlyPlaying,
-                                Scopes.PlaylistReadPrivate,
-                                Scopes.PlaylistReadCollaborative,
-                                Scopes.Streaming,
-                                Scopes.UserReadEmail,
-                                Scopes.AppRemoteControl }
+                Scope = new[] { Scopes.AppRemoteControl, 
+                                Scopes.PlaylistReadPrivate, 
+                                Scopes.PlaylistModifyPublic, 
+                                Scopes.PlaylistModifyPublic, 
+                                Scopes.PlaylistReadCollaborative, 
+                                Scopes.PlaylistReadPrivate, 
+                                Scopes.Streaming, 
+                                Scopes.UgcImageUpload, 
+                                Scopes.UserFollowModify, 
+                                Scopes.UserFollowRead, 
+                                Scopes.UserLibraryModify, 
+                                Scopes.UserLibraryRead, 
+                                Scopes.UserModifyPlaybackState, 
+                                Scopes.UserReadCurrentlyPlaying, 
+                                Scopes.UserReadEmail, 
+                                Scopes.UserReadPlaybackPosition, 
+                                Scopes.UserReadPlaybackState, 
+                                Scopes.UserReadPrivate, 
+                                Scopes.UserReadRecentlyPlayed, 
+                                Scopes.UserTopRead }
             };
             var uri = loginRequest.ToUri();
             // Redirect user to uri via your favorite web-server
