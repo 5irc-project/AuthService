@@ -44,25 +44,34 @@ namespace AuthService.Controllers
 
         [HttpGet()]
         [ActionName("redirect")]
-        public async void AuthRedirect(String code)
+        public async Task<StatusCodeResult> AuthRedirect(String code)
         {
             //get token and get User
             JwtTokenDto spotifyTokens = spotifyConnectionService.getTokens(code).Result;
             var spotifyClient = new SpotifyClient(spotifyTokens.AccessToken);
             var user = await spotifyClient.UserProfile.Current();
-            
+
 
             // Create or get user from UserService
-            UserLoggedDto LoggedInUser = await userHttpClient.CreateOrGetUser(user);
+            UserLoggedDto LoggedInUser;
+            try
+            {
+                LoggedInUser = await userHttpClient.CreateOrGetUser(user);
+
+            } catch(Exception)
+            {
+                return StatusCode(500);
+            }
 
             // Generate JWT
             var jwtString = tokenGenerator.GenerateToken(LoggedInUser);
 
-            LoginDto spotifyDto = new LoginDto();
-            spotifyDto.JwtToken = jwtString;
-            spotifyDto.Tokens = spotifyTokens;
+            //LoginDto spotifyDto = new LoginDto();
+            //spotifyDto.JwtToken = jwtString;
+            //spotifyDto.Tokens = spotifyTokens;
 
             Response.Redirect(spotifyConnectionService.GenerateRedirectUri(spotifyTokens, jwtString).ToString());
+            return StatusCode(301);
         }
 
         [HttpGet()]
