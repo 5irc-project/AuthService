@@ -7,7 +7,8 @@ using SpotifyAPI.Web;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using AuthService.RestConsumer;
+using AuthService.Services.Interface;
+using AuthService.HttpClient;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,105 +18,68 @@ namespace AuthService.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IMapper mapper;
         private readonly IConfiguration config;
-        public AuthController(IMapper mapper, IConfiguration config)
+        private readonly ISpotifyConnectionService spotifyConnectionService;
+        private readonly IUserHttpClient userHttpClient;
+        private readonly ITokenGenerator tokenGenerator;
+        public AuthController(
+            IConfiguration config,
+            ISpotifyConnectionService spotifyConnectionService,
+            IUserHttpClient userHttpClient,
+            ITokenGenerator tokenGenerator
+            )
         {
-            this.mapper = mapper;
             this.config = config;
+            this.spotifyConnectionService = spotifyConnectionService;
+            this.userHttpClient = userHttpClient;
+            this.tokenGenerator = tokenGenerator;
         }
 
         [HttpGet()]
         [ActionName("auth")]
         public string Auth()
         {
-            var loginRequest = new LoginRequest(
-              new Uri(config["Urls:Redirect"]),
-              config["Spotify:ClientId"],
-              LoginRequest.ResponseType.Code
-            )
-            {
-                Scope = new[] { Scopes.AppRemoteControl, 
-                                Scopes.PlaylistReadPrivate, 
-                                Scopes.PlaylistModifyPublic, 
-                                Scopes.PlaylistModifyPublic, 
-                                Scopes.PlaylistReadCollaborative, 
-                                Scopes.PlaylistReadPrivate, 
-                                Scopes.Streaming, 
-                                Scopes.UgcImageUpload, 
-                                Scopes.UserFollowModify, 
-                                Scopes.UserFollowRead, 
-                                Scopes.UserLibraryModify, 
-                                Scopes.UserLibraryRead, 
-                                Scopes.UserModifyPlaybackState, 
-                                Scopes.UserReadCurrentlyPlaying, 
-                                Scopes.UserReadEmail, 
-                                Scopes.UserReadPlaybackPosition, 
-                                Scopes.UserReadPlaybackState, 
-                                Scopes.UserReadPrivate, 
-                                Scopes.UserReadRecentlyPlayed, 
-                                Scopes.UserTopRead }
-            };
-            var uri = loginRequest.ToUri();
             // Redirect user to uri via your favorite web-server
-            return uri.ToString();
+            return spotifyConnectionService.RequestLoginURI(LoginRequest.ResponseType.Code).ToString();
         }
 
         [HttpGet()]
         [ActionName("redirect")]
-        public async Task<LoginDto> AuthRedirect(String code)
+        public async void AuthRedirect(String code)
         {
-            var response = await new OAuthClient().RequestToken(
-                new AuthorizationCodeTokenRequest(config["Spotify:ClientId"],
-                                                  config["Spotify:ClientSecret"],
-                                                  code,
-                                                  new Uri(config["Urls:Redirect"]))
-              );
+            //get token and get User
+            JwtTokenDto spotifyTokens = spotifyConnectionService.getTokens(code).Result;
+            var spotifyClient = new SpotifyClient(spotifyTokens.AccessToken);
+            var user = await spotifyClient.UserProfile.Current();
+            
 
-            var spotify = new SpotifyClient(response.AccessToken);
-            var user = await spotify.UserProfile.Current();
-
-            // DTO to send to userservie to register a user
-            UserDTO userDto = new UserDTO();
-            userDto.Email = user.Email;
-            userDto.Nom = user.DisplayName;
-            userDto.ProfilePictureUrl = user.Images.First().Url;
-
-            // Create or get user
-            UserLoggedDto dto = await UserService.CreateOrGetUser(userDto);
+            // Create or get user from UserService
+            UserLoggedDto LoggedInUser = await userHttpClient.CreateOrGetUser(user);
 
             // Generate JWT
-            var jwtString = GenerateJwtToken(dto);
-            SpotifyModel tokens = new SpotifyModel(response.AccessToken, response.RefreshToken);
+            var jwtString = tokenGenerator.GenerateToken(LoggedInUser);
 
             LoginDto spotifyDto = new LoginDto();
             spotifyDto.JwtToken = jwtString;
-            spotifyDto.Tokens = tokens;
+            spotifyDto.Tokens = spotifyTokens;
 
-            Response.Redirect($"http://localhost/login?accessToken={spotifyDto.Tokens.AccessToken}&refreshToken={spotifyDto.Tokens.RefreshToken}&jwtToken={spotifyDto.JwtToken}");
-
-            return spotifyDto;
-            // Also important for later: response.RefreshToken
+            Response.Redirect(spotifyConnectionService.GenerateRedirectUri(spotifyTokens, jwtString).ToString());
         }
 
-        private string GenerateJwtToken(UserLoggedDto user)
+        [HttpGet()]
+        [ActionName("LoginWithoutSpotify")]
+        public LoginDto LoginWithoutSpotify()
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:SecretKey"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
+
+            UserLoggedDto user = new UserLoggedDto(1, "test", "test@test.com", "test.jpg");
+
+            // Generate JWT
+            var jwtString = tokenGenerator.GenerateToken(user);
+
+            return new LoginDto()
             {
-                new Claim("UserId", user.UserId.ToString()),
-                new Claim("displayName", user.Nom),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                JwtToken = jwtString
             };
-            var token = new JwtSecurityToken(
-                issuer: config["Jwt:Issuer"],
-                audience: config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
-                signingCredentials: credentials
-            );
-            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

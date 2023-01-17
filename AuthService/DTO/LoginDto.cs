@@ -4,11 +4,8 @@ namespace AuthService.DTO
 {
     public class LoginDto
     {
-        public string JwtToken { get; set; }
-        public SpotifyModel Tokens { get; set; }
+        public string? JwtToken { get; set; }
+        public JwtTokenDto? Tokens { get; set; }
 
-        public LoginDto() 
-        {
-        }
     }
 }

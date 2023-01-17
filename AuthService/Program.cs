@@ -1,4 +1,8 @@
 using AuthService.Helpers;
+using AuthService.HttpClient;
+using AuthService.Service;
+using AuthService.Services;
+using AuthService.Services.Interface;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +21,7 @@ namespace AuthService
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddHttpClient();
             builder.Services.AddAutoMapper(typeof(AutoMapperProfiles).Assembly);
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -35,6 +40,10 @@ namespace AuthService
                         ClockSkew = TimeSpan.Zero
                     };
                 });
+
+            builder.Services.AddScoped<ISpotifyConnectionService, SpotifyConnectionService>();
+            builder.Services.AddScoped<IUserHttpClient, UserHttpClient>();
+            builder.Services.AddScoped<ITokenGenerator, TokenGenerator>();
 
             builder.Services.AddCors(options =>
             {
