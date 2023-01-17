@@ -4,18 +4,16 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using SpotifyAPI.Web;
-using Swan;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using AuthService.DTO;
 using AuthService.RestConsumer;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace AuthService.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -27,7 +25,8 @@ namespace AuthService.Controllers
             this.config = config;
         }
 
-        [HttpGet("/auth")]
+        [HttpGet()]
+        [ActionName("auth")]
         public string Auth()
         {
             var loginRequest = new LoginRequest(
@@ -61,7 +60,8 @@ namespace AuthService.Controllers
             return uri.ToString();
         }
 
-        [HttpGet("/redirect")]
+        [HttpGet()]
+        [ActionName("redirect")]
         public async Task<LoginDto> AuthRedirect(String code)
         {
             var response = await new OAuthClient().RequestToken(
