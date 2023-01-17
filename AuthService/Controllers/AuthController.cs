@@ -41,7 +41,6 @@ namespace AuthService.Controllers
                                 Scopes.PlaylistModifyPublic, 
                                 Scopes.PlaylistModifyPublic, 
                                 Scopes.PlaylistReadCollaborative, 
-                                Scopes.PlaylistReadPrivate, 
                                 Scopes.Streaming, 
                                 Scopes.UgcImageUpload, 
                                 Scopes.UserFollowModify, 
@@ -79,7 +78,7 @@ namespace AuthService.Controllers
             UserDTO userDto = new UserDTO();
             userDto.Email = user.Email;
             userDto.Nom = user.DisplayName;
-            userDto.ProfilePictureUrl = user.Images.First().Url;
+            userDto.ProfilePictureUrl = user.Images.Count() > 0 ? user.Images.First().Url : null;
 
             // Create or get user
             UserLoggedDto dto = await UserService.CreateOrGetUser(userDto);
@@ -92,7 +91,7 @@ namespace AuthService.Controllers
             spotifyDto.JwtToken = jwtString;
             spotifyDto.Tokens = tokens;
 
-            Response.Redirect($"http://localhost/login?accessToken={spotifyDto.Tokens.AccessToken}&refreshToken={spotifyDto.Tokens.RefreshToken}&jwtToken={spotifyDto.JwtToken}");
+            Response.Redirect($"http://localhost:8080/login?accessToken={spotifyDto.Tokens.AccessToken}&refreshToken={spotifyDto.Tokens.RefreshToken}&jwtToken={spotifyDto.JwtToken}");
 
             return spotifyDto;
             // Also important for later: response.RefreshToken
