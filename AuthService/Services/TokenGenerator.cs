@@ -11,9 +11,12 @@ namespace AuthService.Services
     {
         private IConfiguration configuration;
 
+        private readonly int NB_MINUTE_EXPIRATION;
+
         public TokenGenerator(IConfiguration configuration)
         {
             this.configuration = configuration;
+            this.NB_MINUTE_EXPIRATION = GetExpirationTimeInMinutes();
         }
 
         public string GenerateToken(UserLoggedDto user)
@@ -30,10 +33,19 @@ namespace AuthService.Services
                 issuer: configuration["Jwt:Issuer"],
                 audience: configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.Now.AddMinutes(NB_MINUTE_EXPIRATION),
                 signingCredentials: credentials
             );
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private int GetExpirationTimeInMinutes()
+        {
+            string ExpirationString = configuration["Jwt:ExpirationTimeInMinutes"];
+            int ExpirationMinute;
+            if (! int.TryParse(ExpirationString, out ExpirationMinute)) ExpirationMinute = 30;
+
+            return ExpirationMinute;
         }
     }
 }
